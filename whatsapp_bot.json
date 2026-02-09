@@ -1,0 +1,308 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "twilio/bikebot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        736
+      ],
+      "id": "0f0f4ff2-dda5-4a84-90e9-ac93f41224ce",
+      "name": "Webhook",
+      "webhookId": "1d16daa9-c017-4060-ae9f-92709b461dcd"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.twiml}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/xml"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1216,
+        736
+      ],
+      "id": "24414436-bf3f-4f6f-ad98-a4545b65a074",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst data = item.body || {};\n\nconst textRaw = (data.Body || '').trim();\nconst text = textRaw.toLowerCase();\n\nconst bikes = {\n  \"1\": \"HF Deluxe\",\n  \"2\": \"Xtreme 125R\",\n  \"3\": \"Hunk 160R 4V\",\n  \"4\": \"Xoom 110\",\n  \"5\": \"Xoom 110 CE\",\n  \"6\": \"Xoom 125R\",\n};\n\nconst mainMenu =\n`Welcome to ABC Bikes.\nReply with a number:\n1. HF Deluxe\n2. Xtreme 125R\n3. Hunk 160R 4V\n4. Xoom 110\n5. Xoom 110 CE\n6. Xoom 125R\n7. Call agent`;\n\n// Reset keywords → always show main menu\nif (['hi','hello','start','menu','0'].includes(text)) {\n  return [{ json: { mode: 'mainMenu', staticText: mainMenu } }];\n}\n\n// If user chooses a bike (1–6), go straight to details\nif (text >= '1' && text <= '6') {\n  const bikeName = bikes[text] || 'Selected bike';\n  return [{\n    json: {\n      mode: 'bikeDetails',\n      bike_id: text,\n      bike_name: bikeName,\n    }\n  }];\n}\n\n// Call agent\nif (text === '7') {\n  return [{\n    json: {\n      mode: 'agent',\n      staticText: 'Call our sales agent at +94XXXXXXXX.\\nHours: 10:00–18:00.\\nReply MENU to see bikes again.',\n    }\n  }];\n}\n\n// Fallback\nreturn [{\n  json: {\n    mode: 'mainMenu',\n    staticText: `Please reply with 1–7.\\n\\n${mainMenu}`,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        736
+      ],
+      "id": "20cf5df2-e6e4-464c-842b-4ba6d2368174",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1-KvkkBBw5L_eCg8NV4cDllPGD04kQE_ptAIPnBgDNMk",
+          "mode": "list",
+          "cachedResultName": "whatsapp",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-KvkkBBw5L_eCg8NV4cDllPGD04kQE_ptAIPnBgDNMk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "bikes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-KvkkBBw5L_eCg8NV4cDllPGD04kQE_ptAIPnBgDNMk/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "bike_id",
+              "lookupValue": "={{$json.bike_id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        880
+      ],
+      "id": "72660d85-c55b-4667-bd77-84d9f5cf4be9",
+      "name": "bikes",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Aq42okKf689D5tyt",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.mode}}",
+                    "rightValue": "mainMenu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ebad5463-0ec4-4b54-93e5-9f3d635b1122"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "dae7c87d-160f-4c73-b14b-56ddf27eceda",
+                    "leftValue": "={{$json.mode}}",
+                    "rightValue": "agent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "275cc20d-2007-4a98-b086-affa45d768b1",
+                    "leftValue": "={{$json.mode}}",
+                    "rightValue": "bikeDetails",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        736
+      ],
+      "id": "49f77e14-d6d7-40c7-b2d7-3a7d77cc9115",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "function pickFirstRow(items) {\n  if (!items || items.length === 0) return null;\n  return items[0].json;\n}\n\nconst input = $input.all();\nconst first = $input.first().json;\n\n// If staticText is present (mainMenu or agent), just use it\nif (first.staticText) {\n  return [{ json: { ...first, replyText: first.staticText } }];\n}\n\n// If this item has price/availability, treat it as bike-details from the sheet\nconst row = pickFirstRow(input) || first;\n\nif (row.price !== undefined || row.availability !== undefined) {\n  const bikeName = row.bike_name || 'Selected bike';\n\n  const price = row.price || '';\n  const availability = row.availability || '';\n  const financing = row.financing || '';\n  const engine = row.engine || '';\n  const transmission = row.transmission || '';\n  const features = row.features || '';\n  const fuel = row['fuel'] || row['fuel '] || '';\n\n  const replyText =\n`${bikeName}\n\nPrice: ${price}\nAvailability: ${availability}\nFinancing: ${financing}\n\nEngine:\n${engine}\n\nTransmission:\n${transmission}\n\nFuel:\n${fuel}\n\nKey features:\n${features}\n\nReply MENU to see other bikes.`;\n\n  return [{ json: { ...row, replyText } }];\n}\n\n// Fallback (only if neither menu nor bike row)\nconst replyText = 'Sorry, something went wrong. Reply MENU to start again.';\nreturn [{ json: { ...first, replyText } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        672
+      ],
+      "id": "309ddf57-a561-44f2-87c7-482f579ebc5d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "function escapeXml(str = '') {\n  return str\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n}\n\nconst first = $input.first().json;\nconst replyText = first.replyText ?? first.staticText ?? '';\n\nconst twiml =\n  `<?xml version=\"1.0\" encoding=\"UTF-8\"?>` +\n  `<Response><Message>${escapeXml(replyText)}</Message></Response>`;\n\nreturn [{ json: { twiml } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        672
+      ],
+      "id": "d597e9c0-ec21-42fe-9736-c7598f9f9f3d",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "bikes": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "bikes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "08f89ea1-4795-4f23-85e5-e593afb7583b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c971e861fac82d4a67553a3928f661c14ec5fbd1df0154b8b600c990a1792da2"
+  },
+  "id": "jk9PSsxN78GHttlHmbhfa",
+  "tags": []
+}
